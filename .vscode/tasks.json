@@ -6,11 +6,12 @@
         {
             "label": "Run pizza",
             "type": "shell",
-            "command": "lua main.lua",
+            "command": "time lua main.lua",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": []
         },
         {
             "label": "Run pizza interactive",

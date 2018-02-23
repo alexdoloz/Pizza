@@ -49,6 +49,18 @@ function PizzaSliceMT:isValid()
   return self:isEnoughIngredients() and self:isSizeValid()
 end
 
+function PizzaSliceMT:containsCell(row, col)
+  return self.r1 <= row and row <= self.r2 and self.c1 <= col and col <= self.c2
+end
+
+function PizzaSliceMT:__tostring()
+  local matrix = self._pizza.matrix
+  local matrixForSlice = utils.map2d(matrix, function (row, col, value) 
+    return self:containsCell(row, col) and value or string.lower(value)
+  end)
+  return string.format("%d %d – %d %d\n%s", self.r1, self.c1, self.r2, self.c2, utils.matrixToString(matrixForSlice))
+end
+
 PizzaSliceMT.__index = PizzaSliceMT
 
 --- PizzaSlice constructor

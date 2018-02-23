@@ -17,6 +17,18 @@ function module.matrixToString(matrix, separator)
   return result
 end
 
+function module.map2d(matrix, func)
+  local result = {}
+  for row, r in ipairs(matrix) do
+    local nextMappedRow = {}
+    for col, c in ipairs(r) do
+      table.insert(nextMappedRow, func(row, col, c))
+    end
+    table.insert(result, nextMappedRow)
+  end
+  return result
+end
+
 function module.split(pString, pPattern)
   local Table = {}  -- NOTE: use {n = 0} in Lua-5.0
   local fpat = "(.-)" .. pPattern
