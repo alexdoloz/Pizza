@@ -1,12 +1,16 @@
 require 'globals'
 
-pizza = Pizza.loadFromFile('data/medium.in')
-sl = PizzaSlice.new(pizza, 1, 1, 3, 2)
+pizza = Pizza.loadFromFile('data/example.in')
+function partitionCoverage(partition)
+  local area = 0
+  for i = 1, #partition do
+    area = area + partition[i]:size()
+  end
+  return area
+end
 
-count = 0
-pizza:findKernels(function(kernel) 
-  --print(kernel.r1, kernel.c1, kernel.r2, kernel.c2)
-  count = count + 1
+pizza:enumeratePartitions(function(p)
+  pretty.dump(p)
+  print("AREA: ", partitionCoverage(p))
+  print('--------')
 end)
-
-print("--- ", count)

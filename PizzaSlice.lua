@@ -12,71 +12,76 @@
 
 local PizzaSliceMT = {}
 
--- Returns size in format width, height
-function PizzaSliceMT:size()
+-- Returns width, height
+function PizzaSliceMT:dimensions()
+  if self == PizzaSlice.EMPTY then 
+    return 0, 0
+  end
   return self.c2 - self.c1 + 1, self.r2 - self.r1 + 1
 end
 
--- Returns ingredient count (T, M)
-function PizzaSliceMT:ingredientsCount()
-  local t, m = 0, 0
-  local matrix = self._pizza.matrix
-  for row = self.r1, self.r2 do
-  for col = self.c1, self.c2 do
-    if matrix[row][col] == "T" then
-      t = t + 1
-    else 
-      m = m + 1
-    end
+function PizzaSliceMT:size()
+  if self == PizzaSlice.EMPTY then 
+    return 0
   end
-  end
-  return t, m
-end
-
-function PizzaSliceMT:isEnoughIngredients()
-  local minIngredients = self._pizza.minIngredients
-  local t, m = self:ingredientsCount()
-  return t >= minIngredients and m >= minIngredients
-end
-
-function PizzaSliceMT:isSizeValid()
-  local maxSize = self._pizza.maxSize
-  local width, height = self:size()
-  return width * height <= maxSize
-end
-
-function PizzaSliceMT:isValid()
-  return self:isEnoughIngredients() and self:isSizeValid()
+  return (self.c2 - self.c1 + 1) * (self.r2 - self.r1 + 1)
 end
 
 function PizzaSliceMT:containsCell(row, col)
+  if self == PizzaSlice.EMPTY then 
+    return false
+  end
   return self.r1 <= row and row <= self.r2 and self.c1 <= col and col <= self.c2
 end
 
+-- экономим на вызове функции
+function PizzaSliceMT:intersectsSlices(slices)
+  if self == PizzaSlice.EMPTY then return false end
+  local r11, r12, c11, c12 = self.r1, self.r2, self.c1, self.c2
+  for i = 1, #slices do
+    local slice = slices[i]
+    if slice == PizzaSlice.EMPTY then goto continue end
+    local r21, r22, c21, c22 = slice.r1, slice.r2, slice.c1, slice.c2
+    if not (r11 > r22 or r12 < r21 or c11 > c22 or c12 < c21) then
+      return true
+    end
+    ::continue::
+  end
+  return false
+end
+
 function PizzaSliceMT:__tostring()
-  local matrix = self._pizza.matrix
-  local matrixForSlice = utils.map2d(matrix, function (row, col, value) 
-    return self:containsCell(row, col) and value or string.lower(value)
-  end)
-  return string.format("%d %d – %d %d\n%s", self.r1, self.c1, self.r2, self.c2, utils.matrixToString(matrixForSlice))
+  if self == PizzaSlice.EMPTY then 
+    return "EMPTY"
+  end
+  local width, height = self:dimensions()
+  return string.format("%d %d – %d %d (%d x %d)", self.c1, self.r1, self.c2, self.r2, width, height)
 end
 
 PizzaSliceMT.__index = PizzaSliceMT
 
 --- PizzaSlice constructor
 
-local PizzaSlice = {}
+local cache = {}
+local indexMultiplier = 2000 -- т.к. максимальная размерность задачи – 1000
 
-function PizzaSlice.new(pizza, r1, c1, r2, c2)
-  local min, max = math.min, math.max
-  local pizzaSlice = {
-    r1 = min(r1, r2),
-    r2 = max(r1, r2),
-    c1 = min(c1, c2),
-    c2 = max(c1, c2),
-    _pizza = pizza
+local PizzaSlice = {}
+PizzaSlice.EMPTY = {}
+setmetatable(PizzaSlice.EMPTY, PizzaSliceMT)
+
+function PizzaSlice.new(c1, r1, c2, r2)
+  assert(r1 <= r2 and c1 <= c2)
+  local cacheIndex = r1 + indexMultiplier * c1 + indexMultiplier^2 * r2 + indexMultiplier^3 * c2
+  local pizzaSlice = cache[cacheIndex]
+  if pizzaSlice then return pizzaSlice end
+  pizzaSlice = {
+    r1 = r1,
+    r2 = r2,
+    c1 = c1,
+    c2 = c2
   }
   setmetatable(pizzaSlice, PizzaSliceMT)
+  cache[cacheIndex] = pizzaSlice
   return pizzaSlice
 end
 
